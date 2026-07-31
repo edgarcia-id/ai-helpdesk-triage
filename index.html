@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise AI Helpdesk Triage & PII Guard | Ed Garcia (NusaIT)</title>
+    <meta name="description" content="Enterprise-grade AI Helpdesk Triage simulator featuring automated UU PDP PII sanitization, zero-hallucination prompt architecture, and structured JSON ITSM routing.">
+    <link rel="icon" href="assets/img/icon-nusait.webp" sizes="192x192" type="image/webp" />
+    
+    <!-- Fonts & CSS -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-navy: #0f172a;
+            --secondary-slate: #1e293b;
+            --accent-emerald: #10b981;
+            --accent-blue: #3b82f6;
+            --accent-amber: #f59e0b;
+            --accent-red: #ef4444;
+            --border-color: #e2e8f0;
+            --text-main: #334155;
+            --text-muted: #64748b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* Top Bar */
+        .top-navbar {
+            background: #ffffff;
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 0;
+        }
+        .brand-title {
+            font-weight: 800;
+            color: var(--primary-navy);
+            letter-spacing: -0.5px;
+            font-size: 1.25rem;
+        }
+
+        /* Header Hero */
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary-navy) 0%, var(--secondary-slate) 100%);
+            color: white;
+            padding: 60px 0 50px;
+            border-bottom: 4px solid var(--accent-blue);
+        }
+        .hero-section h1 {
+            font-weight: 800;
+            font-size: 2.4rem;
+            letter-spacing: -0.8px;
+            margin-bottom: 12px;
+        }
+        .hero-section p {
+            color: #94a3b8;
+            font-size: 1.05rem;
+            max-width: 780px;
+            font-weight: 300;
+            margin-bottom: 0;
+        }
+
+        /* Card Panels */
+        .card-custom {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03);
+            height: 100%;
+        }
+
+        /* Pipeline Badge Progress */
+        .pipeline-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
+        }
+        .pipeline-step {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+        }
+        .pipeline-step.active {
+            color: var(--primary-navy);
+        }
+        .pipeline-step i {
+            margin-right: 6px;
+        }
+        .pipeline-arrow {
+            margin: 0 10px;
+            color: #cbd5e1;
+        }
+
+        /* Terminal & Editor Boxes */
+        .terminal-box {
+            background: #0f172a;
+            color: #e2e8f0;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            height: 380px;
+            overflow: auto;
+            border: 1px solid #334155;
+            line-height: 1.7;
+            white-space: pre-wrap;
+        }
+        .prompt-box {
+            background: #f8fafc;
+            color: #334155;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            height: 380px;
+            overflow: auto;
+            border: 1px solid var(--border-color);
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        /* Redaction Box */
+        .redacted-preview {
+            background: #fef2f2;
+            border: 1px dashed #f87171;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            margin-top: 10px;
+            display: none;
+        }
+
+        /* Nav Tabs */
+        .nav-tabs {
+            border-bottom: 2px solid var(--border-color);
+        }
+        .nav-tabs .nav-link {
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.85rem;
+            border: none;
+            padding: 10px 18px;
+        }
+        .nav-tabs .nav-link.active {
+            color: var(--accent-blue);
+            border-bottom: 2px solid var(--accent-blue);
+            background: transparent;
+        }
+
+        /* Badges */
+        .sev-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 4px;
+        }
+
+        /* Footer */
+        .footer {
+            background: #ffffff;
+            border-top: 1px solid var(--border-color);
+            padding: 35px 0;
+            margin-top: 60px;
+            color: var(--text-muted);
+            font-size: 0.88rem;
+        }
+        .footer a {
+            color: var(--primary-navy);
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            color: var(--accent-blue);
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Navigation -->
+    <nav class="top-navbar">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div class="brand-title">
+                <i class="fas fa-robot text-primary me-2"></i>NusaIT AI Architecture Lab
+            </div>
+            <div>
+                <a href="https://nusait.com/about" target="_blank" class="text-decoration-none text-muted small fw-bold me-4">Enterprise Consulting</a>
+                <a href="https://github.com/edgarcia-id" target="_blank" class="text-decoration-none text-muted small fw-bold"><i class="fab fa-github fs-5 align-middle me-1"></i> GitHub</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header Hero -->
+    <section class="hero-section">
+        <div class="container">
+            <span class="badge bg-primary bg-opacity-25 text-primary border border-primary mb-3 px-3 py-2 text-uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 1px;">
+                AI Governance • ITSM Automation
+            </span>
+            <h1>Enterprise AI Helpdesk Triage & PII Guard</h1>
+            <p>A zero-hallucination LLM Prompt Architecture simulator. Demonstrates automated UU PDP PII redaction, SLA target calculation, and structured JSON function calling for enterprise IT Service Management (ITSM).</p>
+        </div>
+    </section>
+
+    <!-- Main Workspace -->
+    <section class="container py-4">
+        
+        <!-- Pipeline Visual Progress -->
+        <div class="pipeline-bar">
+            <div class="pipeline-step active" id="pipe-1">
+                <i class="fas fa-keyboard text-primary"></i> 1. Unstructured Input
+            </div>
+            <i class="fas fa-chevron-right pipeline-arrow"></i>
+            <div class="pipeline-step" id="pipe-2">
+                <i class="fas fa-user-shield text-danger"></i> 2. PII Sanitization (UU PDP)
+            </div>
+            <i class="fas fa-chevron-right pipeline-arrow"></i>
+            <div class="pipeline-step" id="pipe-3">
+                <i class="fas fa-microchip text-warning"></i> 3. Governed LLM Inference
+            </div>
+            <i class="fas fa-chevron-right pipeline-arrow"></i>
+            <div class="pipeline-step" id="pipe-4">
+                <i class="fas fa-code text-success"></i> 4. Structured JSON Payload
+            </div>
+            <i class="fas fa-chevron-right pipeline-arrow"></i>
+            <div class="pipeline-step" id="pipe-5">
+                <i class="fas fa-bolt text-info"></i> 5. SLA & Webhook Routing
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Left Panel: Test Case & Input -->
+            <div class="col-lg-5">
+                <div class="card card-custom p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0 text-dark"><i class="fas fa-ticket-alt text-primary me-2"></i>Incoming Support Ticket</h5>
+                        <span class="badge bg-light text-muted border font-monospace">ITIL v4 Compliant</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Select Enterprise Scenario / Threat Case</label>
+                        <select id="scenarioBtn" class="form-select form-select-sm" onchange="loadScenario()">
+                            <option value="1">🔴 SEV-1: Ransomware & PII Leak Alert (with NIK/HP)</option>
+                            <option value="2">🟠 SEV-1: C-Level / Director Zoom Meeting Down</option>
+                            <option value="3">🟡 SEV-2: Phishing Email / Wire Fraud Attempt</option>
+                            <option value="4">🔵 SEV-3: ERP Account Locked / MFA Reset (with Phone)</option>
+                            <option value="5">🟢 SEV-4: HRD Department Printer Maintenance</option>
+                            <option value="0">-- Custom Technical Input --</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Raw Ticket Report (Text / Email Body)</label>
+                        <textarea id="userInput" class="form-control font-monospace" rows="5" style="font-size: 0.85rem;"></textarea>
+                    </div>
+
+                    <!-- Redaction Guardrail Indicator -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="fw-bold text-danger"><i class="fas fa-shield-alt me-1"></i> UU PDP PII Redaction Guardrail</small>
+                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger" style="font-size: 0.7rem;">Active</span>
+                        </div>
+                        <div id="redactedPreview" class="redacted-preview">
+                            <!-- Preview of masked PII -->
+                        </div>
+                    </div>
+
+                    <button onclick="executeEnterpriseTriage()" id="btnSimulate" class="btn btn-primary w-100 fw-bold py-3 shadow-sm" style="background-color: var(--primary-navy); border:none;">
+                        <i class="fas fa-bolt text-warning me-2"></i>Execute Automated AI Triage
+                    </button>
+
+                    <div class="mt-4 pt-3 border-top small text-muted">
+                        <p class="mb-1 fw-bold text-dark"><i class="fas fa-info-circle me-1"></i> Architectural Note:</p>
+                        <p style="font-size: 0.78rem; margin-bottom: 0;">Unsanitized employee data (KTP/NIK/Phone) is intercepted and masked before reaching the LLM inference engine to guarantee compliance with UU PDP No. 27/2022 Article 35.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Architecture, JSON & Webhook Schema -->
+            <div class="col-lg-7">
+                <div class="card card-custom p-4">
+                    <ul class="nav nav-tabs mb-3" id="aiTabs" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active" id="json-tab" data-bs-toggle="tab" data-bs-target="#json-pane" type="button">
+                                <i class="fas fa-code me-1"></i> Structured JSON
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" id="prompt-tab" data-bs-toggle="tab" data-bs-target="#prompt-pane" type="button">
+                                <i class="fas fa-terminal me-1"></i> System Prompt (LLM Rules)
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" id="pii-tab" data-bs-toggle="tab" data-bs-target="#pii-pane" type="button">
+                                <i class="fas fa-user-shield me-1"></i> UU PDP PII Guard
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" id="webhook-tab" data-bs-toggle="tab" data-bs-target="#webhook-pane" type="button">
+                                <i class="fas fa-network-wired me-1"></i> Webhook / cURL
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <!-- 1. JSON Payload Tab -->
+                        <div class="tab-pane fade show active" id="json-pane">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span id="statusBadge" class="badge bg-light text-muted border font-monospace">Awaiting Triage Execution...</span>
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success font-monospace" id="latencyBadge">SLA Engine: READY</span>
+                            </div>
+                            <div class="terminal-box" id="jsonOutput">// Click "Execute Automated AI Triage" to simulate enterprise LLM function calling and SLA assignment...</div>
+                        </div>
+
+                        <!-- 2. System Prompt Tab -->
+                        <div class="tab-pane fade" id="prompt-pane">
+                            <div class="small fw-bold text-muted mb-2"><i class="fas fa-shield-alt me-1"></i> Zero-Hallucination System Prompt (OpenAI / Gemini Function Calling)</div>
+                            <div class="prompt-box" id="systemPromptText">### SYSTEM PROMPT ARCHITECTURE v3.4 ###
+You are an Enterprise IT Service Management (ITSM) AI Triage Controller for [Company Name].
+Your sole objective is to classify unstructured support tickets into structured JSON conforming to ITIL v4 incident management standards.
+
+### MANDATORY GOVERNANCE RULES:
+1. ZERO HALLUCINATION: Rely strictly on the provided ticket text. Do not assume hardware models or server IPs not mentioned.
+2. PII AWARENESS: Verify that any incoming text has been sanitized of Personal Identifiable Information (NIK, Phone, Passwords) before generating auto-replies.
+3. SEVERITY ASSIGNMENT (SLA MAPPING):
+   - SEV-1 (Critical): Ransomware, Core ERP DB failure, C-Level/Director outage, confirmed PII leak. (SLA Target: 4 Hours).
+   - SEV-2 (High): Department-wide network down, Phishing/Wire fraud attempts, Server CPU > 95%. (SLA Target: 12 Hours).
+   - SEV-3 (Medium): Single user account lock, MFA reset, minor software bug. (SLA Target: 24 Hours).
+   - SEV-4 (Low): Consumable replenishment (printer ink, paper), feature inquiries. (SLA Target: 72 Hours).
+4. HUMAN-IN-THE-LOOP (HITL): If confidence is < 0.85, set "hitl_review_required": true.
+
+### MANDATORY OUTPUT SCHEMA (JSON ONLY):
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "ticket_id": "string",
+  "category": "Network | Security | Hardware | Software | Access",
+  "severity": "SEV-1 | SEV-2 | SEV-3 | SEV-4",
+  "sla_target_hours": "number",
+  "assignee_team": "string",
+  "pii_detected_and_redacted": "boolean",
+  "confidence_score": "number",
+  "hitl_review_required": "boolean",
+  "executive_summary": "string",
+  "suggested_action": "string"
+}</div>
+                        </div>
+
+                        <!-- 3. PII Guard Tab -->
+                        <div class="tab-pane fade" id="pii-pane">
+                            <div class="small fw-bold text-muted mb-2"><i class="fas fa-gavel me-1"></i> UU PDP No. 27/2022 PII Redaction Middleware Logic</div>
+                            <div class="prompt-box">### PII SANITIZATION GUARDRAIL (REGEX MIDDLEWARE) ###
+// Designed to comply with Indonesia Personal Data Protection Law (UU PDP No. 27/2022)
+// Protects Data Subjects by preventing unencrypted PII ingestion into third-party AI APIs.
+
+const piiSanitizationRules = [
+  {
+    ruleName: "Indonesia NIK / KTP Number",
+    pattern: /\b(?:3[1-9]|1[1-9]|2[1-9]|5[1-3]|6[1-5]|7[1-6]|8[1-2]|9[1-2])\d{14}\b/g,
+    replacement: "[REDACTED_NIK_UU_PDP]"
+  },
+  {
+    ruleName: "Indonesian Mobile Phone Numbers",
+    pattern: /\b(?:08|628|\+628)\d{8,11}\b/g,
+    replacement: "[REDACTED_PHONE_NUMBER]"
+  },
+  {
+    ruleName: "PIN or Credit/Debit Card Numbers",
+    pattern: /\b(?:\d{4}[ -]?){4}\b|\b\d{6,8}\b/g,
+    replacement: "[REDACTED_SENSITIVE_PIN]"
+  }
+];
+
+// Execution: Runs locally before HTTP POST to LLM endpoint.
+// Audit Log: Redaction events are timestamped and logged locally.</div>
+                        </div>
+
+                        <!-- 4. Webhook / cURL Tab -->
+                        <div class="tab-pane fade" id="webhook-pane">
+                            <div class="small fw-bold text-muted mb-2"><i class="fas fa-server me-1"></i> Ready for Jira / Zendesk / ERP Webhook Integration</div>
+                            <div class="prompt-box">### WEBHOOK ROUTING PAYLOAD (cURL EXAMPLE) ###
+# Send automated triage payload directly to Enterprise Helpdesk API
+
+curl -X POST https://api.nusait.com/v1/itsm/webhook \
+  -H "Content-Type: application/json" \
+  -H "X-NusaIT-API-Key: secure-token-placeholder" \
+  -d '{
+    "event": "ticket.ai_triaged",
+    "timestamp": "2026-07-29T18:39:27+07:00",
+    "source": "AI-Helpdesk-Triage-Gateway",
+    "payload": {
+      "ticket_id": "TKT-84920",
+      "severity": "SEV-1",
+      "assignee_team": "SecOps-Incident-Response",
+      "sla_target": "4 Hours (RTO)",
+      "uu_pdp_compliance_flag": true,
+      "auto_dispatch": true
+    }
+  }'</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center">
+            <div class="mb-3 mb-md-0">
+                <strong>Ed Garcia (NusaIT)</strong> — Principal IT Governance Consultant & ERP Architect.
+            </div>
+            <div>
+                <a href="https://github.com/edgarcia-id/ai-helpdesk-triage" target="_blank" class="me-4"><i class="fab fa-github"></i> Repository</a>
+                <a href="https://www.linkedin.com/in/alfredo-garcia-elbarta-tarigan/" target="_blank" class="me-4"><i class="fab fa-linkedin"></i> LinkedIn</a>
+                <a href="https://nusait.com/contact" target="_blank"><i class="fas fa-envelope"></i> Consulting Inquiry</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Real-World ITSM Scenarios with Indonesian Context
+        const scenarios = {
+            "1": "SERVER ALERT: Database ERP terkunci, ada pesan tebusan ransomware! NIK admin pelapor 3201012304910002, segera hubungi HP 081298765432!!",
+            "2": "Internet kantor pusat putus total dari jam 8 pagi! Zoom meeting Direksi dengan calon investor luar negeri terputus total! Tolong action secepatnya!!",
+            "3": "Ada email masuk ke tim finance mengatasnamakan vendor meminta perubahan nomor rekening transfer pembayaran invoice proyek senilai Rp 500 Juta. Mohon dicek apakah ini phising.",
+            "4": "Saya tidak bisa login ke sistem ERP, akun terkunci setelah salah password 3 kali. Mohon reset MFA ke nomor HP saya 085712345678.",
+            "5": "Tinta printer warna merek Epson di ruang HRD sudah hampir habis, dan kertas A4 tinggal 1 rim. Minta tolong dijadwalkan penggantian."
+        };
+
+        function loadScenario() {
+            const val = document.getElementById('scenarioBtn').value;
+            const input = document.getElementById('userInput');
+            if(val !== "0") {
+                input.value = scenarios[val];
+            } else {
+                input.value = "";
+            }
+            // Hide preview when changing
+            document.getElementById('redactedPreview').style.display = 'none';
+        }
+
+        // PII Sanitization Engine (UU PDP Guard)
+        function sanitizePII(text) {
+            let redactedText = text;
+            let piiDetected = false;
+
+            // 1. Mask Indonesian 16-digit NIK / KTP
+            const nikRegex = /\b(?:3[1-9]|1[1-9]|2[1-9]|5[1-3]|6[1-5]|7[1-6]|8[1-2]|9[1-2])\d{14}\b/g;
+            if(nikRegex.test(redactedText)) {
+                piiDetected = true;
+                redactedText = redactedText.replace(nikRegex, '<span style="background: #f87171; color: white; padding: 1px 4px; border-radius: 3px;">[REDACTED_NIK_UU_PDP]</span>');
+            }
+
+            // 2. Mask Indonesian Phone Numbers (08xx / 628xx)
+            const phoneRegex = /\b(?:08|628|\+628)\d{8,11}\b/g;
+            if(phoneRegex.test(redactedText)) {
+                piiDetected = true;
+                redactedText = redactedText.replace(phoneRegex, '<span style="background: #f87171; color: white; padding: 1px 4px; border-radius: 3px;">[REDACTED_PHONE_UU_PDP]</span>');
+            }
+
+            return { redactedText, piiDetected };
+        }
+
+        // Execute Simulated AI Triage
+        function executeEnterpriseTriage() {
+            const rawText = document.getElementById('userInput').value;
+            const jsonBox = document.getElementById('jsonOutput');
+            const previewBox = document.getElementById('redactedPreview');
+            const statusBadge = document.getElementById('statusBadge');
+            const btn = document.getElementById('btnSimulate');
+
+            if(!rawText.trim()) {
+                alert("Please select a scenario or enter ticket text.");
+                return;
+            }
+
+            // Step 1: UI Visual Loading
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Executing PII Guard & LLM Inference...';
+            statusBadge.className = "badge bg-warning text-dark border font-monospace";
+            statusBadge.innerText = "RUNNING_PII_GUARD...";
+            
+            document.querySelectorAll('.pipeline-step').forEach(el => el.classList.remove('active'));
+            document.getElementById('pipe-2').classList.add('active');
+
+            // Step 2: Perform PII Sanitization (UU PDP Guard)
+            const { redactedText, piiDetected } = sanitizePII(rawText);
+            
+            if(piiDetected) {
+                previewBox.style.display = 'block';
+                previewBox.innerHTML = `<strong><i class="fas fa-user-shield me-1"></i> UU PDP Middleware Intercepted PII:</strong><br>${redactedText}`;
+            } else {
+                previewBox.style.display = 'none';
+            }
+
+            // Step 3: Simulate LLM Inference Latency (~900ms)
+            setTimeout(() => {
+                document.getElementById('pipe-3').classList.add('active');
+                statusBadge.innerText = "LLM_INFERENCE_COMPLETE";
+
+                const lowerText = rawText.toLowerCase();
+                let category = "Software";
+                let severity = "SEV-3";
+                let slaHours = 24;
+                let team = "Helpdesk_L1_Support";
+                let confidence = 0.94;
+                let hitl = false;
+                let summary = "Standard technical inquiry or user support request.";
+                let action = "Route to L1 Helpdesk for standard ticketing processing.";
+
+                // Advanced Decision Logic
+                if(lowerText.includes("ransomware") || lowerText.includes("tebusan") || lowerText.includes("terkunci") && lowerText.includes("database")) {
+                    category = "Security";
+                    severity = "SEV-1";
+                    slaHours = 4;
+                    team = "SecOps_Incident_Response_Team";
+                    confidence = 0.99;
+                    summary = "CRITICAL: Potential Ransomware breach on Core ERP database. Immediate isolation required.";
+                    action = "EXECUTE DRP SOP: Isolate server VLAN immediately, initiate 3x24h UU PDP breach log, alert CISO.";
+                } else if(lowerText.includes("direksi") || lowerText.includes("putus") || lowerText.includes("down") || lowerText.includes("investor")) {
+                    category = "Network";
+                    severity = "SEV-1";
+                    slaHours = 4;
+                    team = "NetworkOps_Infrastructure";
+                    confidence = 0.96;
+                    summary = "CRITICAL: Head office internet disruption impacting C-Level investor meetings.";
+                    action = "Switch traffic to secondary failover ISP link and dispatch on-site network engineer.";
+                } else if(lowerText.includes("phising") || lowerText.includes("rekening") || lowerText.includes("transfer") || lowerText.includes("invoice")) {
+                    category = "Security";
+                    severity = "SEV-2";
+                    slaHours = 12;
+                    team = "SecOps_Fraud_Investigation";
+                    confidence = 0.91;
+                    summary = "HIGH: Attempted Business Email Compromise (BEC) / Wire fraud targeting Finance department.";
+                    action = "Quarantine email sender domain across corporate Mailer and warn Finance PIC.";
+                } else if(lowerText.includes("password") || lowerText.includes("lupa") || lowerText.includes("mfa") || lowerText.includes("login")) {
+                    category = "Access";
+                    severity = "SEV-3";
+                    slaHours = 24;
+                    team = "IAM_Identity_Support";
+                    confidence = 0.97;
+                    summary = "MEDIUM: Employee ERP account locked requiring MFA authentication reset.";
+                    action = "Verify user identity via supervisor approval before triggering MFA seed reset.";
+                } else if(lowerText.includes("printer") || lowerText.includes("tinta") || lowerText.includes("kertas") || lowerText.includes("epson")) {
+                    category = "Hardware";
+                    severity = "SEV-4";
+                    slaHours = 72;
+                    team = "General_Affairs_IT_Support";
+                    confidence = 0.98;
+                    summary = "LOW: Consumable replenishment request for HR department printing equipment.";
+                    action = "Schedule technician visit during standard maintenance window.";
+                }
+
+                const jsonPayload = {
+                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                    "ticket_id": "TKT-" + Math.floor(100000 + Math.random() * 900000),
+                    "timestamp_wib": new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" }),
+                    "category": category,
+                    "severity": severity,
+                    "sla_target_hours": slaHours,
+                    "assignee_team": team,
+                    "uu_pdp_pii_redacted": piiDetected,
+                    "confidence_score": confidence,
+                    "hitl_review_required": hitl,
+                    "executive_summary": summary,
+                    "suggested_remediation": action
+                };
+
+                // Syntax Highlighting for Terminal
+                const formattedJSON = JSON.stringify(jsonPayload, null, 2)
+                    .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                        let cls = 'color: #38bdf8;'; // String
+                        if (/^"/.test(match)) {
+                            if (/:$/.test(match)) {
+                                cls = 'color: #818cf8; font-weight: bold;'; // Keys
+                            } else {
+                                cls = 'color: #10b981;'; // String Values (Green)
+                            }
+                        } else if (/true|false/.test(match)) {
+                            cls = 'color: #f59e0b; font-weight: bold;'; // Boolean
+                        } else if (/[0-9]/.test(match)) {
+                            cls = 'color: #f472b6;'; // Numbers
+                        }
+                        return '<span style="' + cls + '">' + match + '</span>';
+                    });
+
+                jsonBox.innerHTML = formattedJSON;
+                
+                // Pipeline complete
+                document.getElementById('pipe-4').classList.add('active');
+                document.getElementById('pipe-5').classList.add('active');
+                statusBadge.className = "badge bg-success text-white border font-monospace";
+                statusBadge.innerText = "HTTP 200: TRIAGE_PAYLOAD_READY";
+                
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-bolt text-warning me-2"></i>Execute Automated AI Triage';
+
+            }, 900);
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadScenario();
+        });
+    </script>
+</body>
+</html>
