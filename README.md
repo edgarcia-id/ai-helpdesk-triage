@@ -1,2 +1,135 @@
-# ai-helpdesk-triage
-An AI Prompt Architecture simulator demonstrating how to automate IT Helpdesk triage using LLMs and structured JSON output.
+# 🤖 Enterprise AI Helpdesk Triage & PII Guard (Prompt Architecture)
+
+**A client-side architectural showcase demonstrating how to use Large Language Models (LLMs) to automate IT Service Management (ITSM) triage, enforce zero-hallucination guardrails, and comply with Indonesia's Personal Data Protection Law (UU PDP No. 27/2022).**
+
+[![Interactive Lab](https://img.shields.io/badge/Live_Architecture_Lab-Execute_Simulator-3b82f6?style=for-the-badge&logo=githubpages)](https://edgarcia-id.github.io/ai-helpdesk-triage/)
+[![Standard](https://img.shields.io/badge/Framework-ITIL_v4_Compliant-10b981?style=for-the-badge)](#)
+[![Compliance](https://img.shields.io/badge/Compliance-UU_PDP_No._27%2F2022-ef4444?style=for-the-badge)](#)
+[![Maintained By](https://img.shields.io/badge/Maintained_By-NusaIT-0f172a?style=for-the-badge)](https://nusait.com)
+
+---
+
+## 🌐 Interactive Architecture Simulator
+Do not test raw prompts in standard chatbots. 
+
+We have deployed an interactive client-side lab where IT Leaders and Enterprise Architects can test raw ticket reports, inspect **automated PII sanitization**, review structured JSON schemas, and test SLA routing logic:  
+👉 **[Launch the Enterprise AI Triage Lab](https://edgarcia-id.github.io/ai-helpdesk-triage/)**
+
+---
+
+## 🧐 Executive Overview: Why Basic LLMs Fail in Enterprise ITSM
+Many organizations attempt to use general-purpose LLMs (such as ChatGPT or Gemini) to automate Helpdesk ticket triage, only to face three critical enterprise risks:
+
+1. **PII Leakage (UU PDP Violation):** Uncensored ticket submissions containing employee National ID numbers (NIK/KTP), phone numbers, or passwords are inadvertently transmitted to external LLM servers.
+2. **Hallucination & Unstructured Text:** Conversational AI models generate chatty replies instead of deterministic, machine-readable payloads required by ticketing APIs (Jira, Zendesk, ServiceNow).
+3. **SLA Misalignment:** Generic AI models fail to map business severity against contractual Recovery Time Objectives (RTO) or executive priority rules.
+
+---
+
+## 🏛️ The 3-Layer Governance Architecture
+
+This repository demonstrates how to build a **Governed AI Triage Pipeline** that safely integrates LLMs into enterprise ITSM workflows:
+
+```text
+[ Unstructured Ticket Report ]
+             │
+             ▼
+┌────────────────────────────────────────────────────────┐
+│ LAYER 1: UU PDP PII Redaction Middleware (Regex Guard) │
+│ • Intercepts & masks 16-digit NIK / KTP numbers        │
+│ • Masks mobile phone numbers & sensitive PINs          │
+└────────────────────────────────────────────────────────┘
+             │ (Sanitized Text Only)
+             ▼
+┌────────────────────────────────────────────────────────┐
+│ LAYER 2: Zero-Hallucination Prompt Architecture        │
+│ • Enforces strict role boundary & ITIL v4 rules        │
+│ • Applies Confidence Scoring & HITL review thresholds  │
+└────────────────────────────────────────────────────────┘
+             │
+             ▼
+┌────────────────────────────────────────────────────────┐
+│ LAYER 3: Strict JSON Schema & SLA Routing Gateway      │
+│ • Maps SEV-1 to SEV-4 against RTO/RPO targets          │
+│ • Outputs structured JSON ready for Webhook dispatch   │
+└────────────────────────────────────────────────────────┘
+             │
+             ▼
+[ Automated Jira / Zendesk / ERP Webhook ]
+```
+
+---
+
+## 🛠️ Key Architectural Highlights
+
+### 1. UU PDP PII Redaction Guardrail (Article 35 Compliance)
+In compliance with Indonesia's **Undang-Undang Pelindungan Data Pribadi (UU PDP No. 27/2022)**, our middleware regex interceptor parses incoming text *before* it reaches the inference engine. 
+* **Example input:** `"Pelapor NIK 3201012304910002, hubungi HP 081298765432"`
+* **Sanitized payload sent to LLM:** `"Pelapor NIK [REDACTED_NIK_UU_PDP], hubungi HP [REDACTED_PHONE_UU_PDP]"`
+
+### 2. Strict JSON Schema Enforcement (Function Calling)
+The System Prompt forces the LLM to output valid JSON conforming to an enterprise ITSM schema:
+
+```json
+{
+  "$schema": "[https://json-schema.org/draft/2020-12/schema](https://json-schema.org/draft/2020-12/schema)",
+  "ticket_id": "TKT-84920",
+  "category": "Security | Network | Hardware | Software | Access",
+  "severity": "SEV-1 | SEV-2 | SEV-3 | SEV-4",
+  "sla_target_hours": 4,
+  "assignee_team": "SecOps_Incident_Response_Team",
+  "uu_pdp_pii_redacted": true,
+  "confidence_score": 0.99,
+  "hitl_review_required": false,
+  "executive_summary": "CRITICAL: Potential Ransomware breach on Core ERP database.",
+  "suggested_remediation": "EXECUTE DRP SOP: Isolate server VLAN immediately..."
+}
+```
+
+### 3. Human-In-The-Loop (HITL) Fallback
+If the LLM's classification confidence falls below **0.85**, the payload automatically flags `"hitl_review_required": true`, routing the ticket to a human Helpdesk Supervisor before automated actions are triggered.
+
+---
+
+## 🚀 How to Integrate with Your Helpdesk API
+
+The JSON payload generated by this simulator can be forwarded directly to your enterprise ticketing system via a standard `POST` webhook:
+
+```bash
+curl -X POST [https://api.yourcompany.com/v1/itsm/webhook](https://api.yourcompany.com/v1/itsm/webhook) \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <SECURE_API_TOKEN>" \
+  -d '{
+    "event": "itsm.ticket.ai_triaged",
+    "source": "NusaIT-AI-Triage-Gateway",
+    "payload": {
+      "ticket_id": "TKT-84920",
+      "severity": "SEV-1",
+      "assignee_team": "SecOps_Incident_Response_Team",
+      "sla_target": "4 Hours (RTO)",
+      "uu_pdp_compliance_flag": true
+    }
+  }'
+```
+
+---
+
+## ⚠️ Architectural & Legal Disclaimer
+*This repository is published as an open-source educational and architectural simulator for IT Service Management (ITSM) automation and AI governance. While engineered to demonstrate compliance with ISO 27001 and Indonesia's UU PDP No. 27/2022, implementing AI automation in production requires a full enterprise security audit and technical API hardening.*
+
+---
+
+## 👨‍💻 About the Author & AI Implementation Partner
+
+Integrating AI into an enterprise is not about writing basic chat prompts; it is about **governance, data privacy, and systems integration**.
+
+If your organization requires a seasoned technology partner to design **Secure AI Workflows**, conduct an **IT Security Audit**, or develop custom **ERP & HRIS platforms engineered with Privacy-by-Design**:
+
+**Alfredo (Ed) Garcia** is a Senior ERP Architect, IT Infrastructure Lead, and Principal Consultant at **[Nusa Industri Teknologi (NusaIT)](https://nusait.com)**. He brings deep practical expertise in bridging complex compliance mandates (ISO 27001 / UU PDP) with reachable, resilient software architecture.
+
+* 👔 **LinkedIn:** [Alfredo (Ed) Garcia](https://www.linkedin.com/in/alfredo-garcia-elbarta-tarigan/)
+* 🏢 **Consulting Firm:** [PT Nusa Industri Teknologi (NusaIT)](https://nusait.com)
+* 📧 **Consultation Inquiries:** [NusaIT Contact & Advisory](https://nusait.com/contact)
+
+---
+*© 2026 Alfredo Garcia / NusaIT. Released under the MIT License.*
